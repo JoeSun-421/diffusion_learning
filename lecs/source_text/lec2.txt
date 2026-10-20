@@ -1,0 +1,341 @@
+     Lecture 2
+        Flow Matching
+
+   MIT IAP 2026 | Jan 22, 2025
+
+Peter Holderrieth and Ron Shprints
+
+  Sponsor: Tommi Jaakkola
+Reminder: Flow and Diffusion Models
+  Flow      Initialize:      ODE:
+ Model
+
+
+                 E.g. Gaussian      Neural network   Diffusion coeff.
+                                    vector field
+Diffusion   Initialize:      SDE:
+
+ Model
+
+
+To get samples, simulate ODE/SDE from t=0 to t=1 and return
+Next step: Training a flow model
+   Without training, the model produces “non-sense”→ We need to train
+
+
+Training = Finding parameters           such that
+
+                                                    Implies
+
+
+Start with initial   Follow along                             The distribution of
+distribution         the vector field                         the final point = data
+                                                              distribution
+
+                       Goal of lecture 2 (today):
+    Derive Flow Matching (training algorithm for flow models)
+                  Section 2:
+              Flow Matching
+
+Goal: Derive a training algorithm for flow models
+                   The Flow Matching Matrix
+
+
+  Conditional             Conditional        Conditional
+Probability Path          Vector Field   Flow Matching Loss
+
+   Marginal                Marginal           Marginal
+Probability Path          Vector Field   Flow Matching Loss
+
+
+
+
+           “Conditional” = “Per single data point”
+     “Marginal” = “Across distribution of data points”
+Probability Paths: The Path from Noise to Data
+           Conditional Probability Path
+
+
+
+
+ t=0                                      t=1
+
+
+
+
+Marginal Probability Path
+Plotting samples from a conditional probability path over
+time
+
+
+
+
+  Note: A probability path only specifies the marginals (each snapshot). It says
+  nothing about the evolution of a single particle in time (no dynamics).
+
+                                    Source: https://mariogemoll.com/flow-matching
+           Conditional Probability Path
+
+
+
+
+Marginal Probability Path
+Conditional Probability Path
+
+
+
+
+Marginal Probability Path
+Conditional Prob. Path
+                   Notation     Key property       Gaussian example
+
+Conditional                   Interpolates
+Probability Path              and a data point z
+
+
+Conditional                   ODE follows
+Vector Field                  conditional path
+
+
+                               Gradient of
+                               log-likelihood
+Marginal Prob. Path
+              Notation    Key property     Formula
+
+Marginal                 Interpolates
+Probability
+                         and
+Path
+
+Marginal                 ODE follows
+Vector                   marginal path
+Field
+
+                          Gradient of
+                          log-likelihood
+                          of marginal
+                          path
+Example - Conditional Vector Field for Gaussian
+
+
+
+
+Proof Sketch:
+Step 1: By checking ODE, show that the flow of the vector field is given by
+
+
+
+
+Step 2: If                          is random, then we know that then:
+Gaussian
+Conditional
+Probability Path
+And
+Conditional
+Vector Field
+
+
+
+
+Figure credit:
+Yaron Lipman
+Simulating ODE
+with Conditional
+Vector Field for
+Conditional
+Probability Path
+
+NOTE: This is an animated gif
+and is static in a PDF
+
+
+Figure credit:
+Yaron Lipman
+Toy example
+
+NOTE: This is an
+animated gif and
+is static in a PDF
+
+Figure credit:
+Yaron Lipman
+Simulating ODE
+with Marginal
+Vector Field for
+Gaussian
+Probability Path
+
+
+
+
+Figure credit:
+Yaron Lipman
+Ground truth   ODE samples   ODE Trajectories
+Continuity Equation              Randomly initialized ODE
+
+                Given:
+
+
+                     Follow probability path:
+                                                        Marginals are
+                                                        p_t
+
+
+                    Continuity equation holds
+   equivalent
+                                                            PDE holds
+Continuity Equation
+
+
+                                 Outflow
+
+Change of     Outflow - inflow
+probability    of probability
+                                  Inflow
+mass at x      mass from u
+Conditional Prob. Path, Vector Field, and Score
+                   Notation     Key property       Gaussian example
+
+Conditional                   Interpolates
+Probability Path
+                              and a data point z
+
+
+Conditional                   ODE follows
+Vector Field                  conditional path
+
+
+                               Gradient of
+                               log-likelihood
+Marginal Prob. Path, Vector Field, and Score
+              Notation    Key property     Formula
+
+Marginal                 Interpolates
+Probability
+                         and
+Path
+
+Marginal                 ODE follows
+Vector                   marginal path
+Field
+
+                          Gradient of
+                          log-likelihood
+                          of marginal
+                          path
+Example marginal vector field - Meta MovieGen
+
+
+
+
+   These videos are generated by simulating the ODE with
+              the (learnt) marginal vector field
+Conditional Flow Matching for Gaussian probability path
+Prob. path                    Conditional VF
+
+
+Noise Sampling
+
+Plugging in Noise Sampling into CFM Loss results in:
+
+
+
+
+                                    noise+data         velocity
+Straight Line Schedule
+
+
+
+
+                             Linear      Difference
+                         interpolation    between
+                         of noise and    noise and
+                              data          data
+Figure
+credit:
+Yaron
+Lipman
+Example Flow Matching - Meta MovieGen
+
+
+
+
+   The neural network that generates these videos was trained
+             with the algorithm in the previous slide
+Example Flow Matching - Stable Diffusion 3
+
+
+
+
+    The neural network that generates these images was trained
+                   with the algorithm just shown
+Reminder: Sampling Algorithm for Flow Model
+
+
+
+
+                          Random initialization!
+
+
+
+
+                         Return final point
+                   The Flow Matching Matrix
+
+
+  Conditional             Conditional         Conditional
+Probability Path          Vector Field    Flow Matching Loss
+
+   Marginal                Marginal            Marginal
+Probability Path          Vector Field    Flow Matching Loss
+
+   Defines             Defines training   Loss function that
+distributions           target that we       we want to
+from noise to            want to learn     minimize during
+     data                                       traing
+Conditional Prob. Path, Vector Field, and FM Loss
+                   Notation      Key property       Gaussian example
+
+Conditional                    Interpolates
+Probability Path               and a data point z
+
+
+Conditional                     ODE follows
+Vector Field                    conditional path
+
+                                   Gradient of
+                              Loss we
+Conditional                   minimize
+                                   log-likelihood
+FM Loss
+                              during training
+       All these objects are tractable. Just analytical formulas!
+Marginal Prob. Path, Vector Field, and FM Loss
+              Notation    Key property         Formula
+
+Marginal                 Interpolates
+Probability
+                         and
+Path
+
+Marginal                 ODE follows
+Vector                   marginal path
+Field
+
+                       Gradient of
+                     Implicitly
+Marginal               log-likelihood
+FM Loss              minimized   via
+                       of marginal
+                     cond  FM loss
+                       path
+ None of these objects are tractable. But we can still learn them!
+               Next class:
+Friday (Tomorrow), 11am-12:30pm
+ Score matching and guidance!
+
+       E25-111 (same room)
+
+
+Office hours: Tomorrow, 3pm-4:30pm in 36-156
+

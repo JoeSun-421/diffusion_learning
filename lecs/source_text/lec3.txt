@@ -1,0 +1,436 @@
+    Lecture 03
+ Score Matching and Guidance
+
+   MIT IAP 2026 | Jan 23, 2025
+
+Peter Holderrieth and Ron Shprints
+
+  Sponsor: Tommi Jaakkola
+Reminder: Conditional Prob. Path and Cond. Vector Field
+                   Notation     Key property       Gaussian example
+
+Conditional                   Interpolates
+Probability Path
+                              and a data point z
+
+
+Conditional                   ODE follows
+Vector Field                  conditional path
+
+
+                               Gradient of
+                               log-likelihood
+Reminder: Marginal Prob. Path and Marginal Vector Field
+              Notation    Key property     Formula
+
+Marginal                 Interpolates
+Probability
+                         and
+Path
+
+Marginal                 ODE follows
+Vector                   marginal path
+Field
+
+                          Gradient of
+                          log-likelihood
+                          of marginal
+                          path
+We can learn the marginal vector field by approximating the cond. VF for
+many different data points z.
+Reminder: Sampling Algorithm for Flow Model
+
+
+
+
+                          Random initialization!
+
+
+
+
+                         Return final point
+                   Section 4:
+Training algorithms - 2: Score Matching
+
+Goal: New perspective on flow and diffusion models.
+           SDE/Stochastic Sampling.
+Score Functions = Gradients of the log-likelihood
+
+Log-likelihood:                   Score function:
+ Example - Score of Gaussian Probability Path
+
+
+
+
+Proof:
+Conditional Prob. Path, Vector Field, and Score
+                   Notation     Key property       Gaussian example
+
+Conditional                   Interpolates
+Probability Path              and a data point z
+
+
+Conditional                   ODE follows
+Vector Field                  conditional path
+
+Conditional                    Gradient of
+Score
+                               log-likelihood
+Function
+Marginal Prob. Path, Vector Field, and Score
+              Notation    Key property   Formula
+
+Marginal                 Interpolates
+Probability
+                         and
+Path
+
+Marginal                 ODE follows
+Vector                   marginal path
+Field
+
+Marginal                  Can be used
+Score                     to convert
+Function                  ODE target
+                          to SDE
+Observation: Both Conditional VF and Cond Score are
+linear functions! Just with different coefficients!
+
+Conditional            ODE follows
+Vector Field           conditional path
+
+Conditional            Gradient of
+Score
+                       log-likelihood
+Function
+Reparameterization: Velocity Field –> Score Function
+
+
+
+
+ Proof: Algebra. Insert formulas. See lecture notes.
+Early Diffusion Models learnt the score function instead and then
+just transformed it into the vector field! This is equivalent!
+Denoising Score Matching for Gaussian Prob. Path
+
+
+
+
+ Note what the network does: It needs to predict the noise that was
+ used to corrupt the data point! (DENOISING diffusion models)
+Numerically
+unstable for
+low beta!
+Fokker-Planck equation       Randomly initialized SDE
+
+  Given:
+
+
+
+                 Follow probability path:
+                                                   Marginals are
+                                                   p_t
+
+
+                Fokker-Planck equation holds
+   equivalent
+
+
+
+                                Continuity equ.    Heat equ.
+Fokker-Planck Equation
+
+
+
+
+                                Dispersion
+Change of
+probability
+mass at x     Heat dispersion
+Stochastic Sampling of diffusion models
+Choose noise level      . By “SDE extension trick”, we can sample from:
+
+
+
+
+For Gaussian probability paths, we can express this solely in terms of the
+score:
+
+
+
+
+Plugin score network:
+Deterministic Sampling   Stochastic Sampling
+ Stochastic (SDE) Sampling with Diffusion Models
+
+
+  Conversion of
+  of noise into
+  protein
+  structure via
+  SDE
+  sampling
+
+
+
+Slide credit:
+Jason Yim
+Why would we want stochastic/SDE dynamics?
+In theory: All diffusion coefficients lead to the same result (sample from data
+distribution).
+In practice:
+ -   Training error: Neural network has not perfectly learnt the marginal vector
+     field/score.
+ -   Simulation error: We need to simulate SDE/ODE leading to discretization
+     error.
+Downstream applications: Fine-tuning, inference-time optimization, etc. might
+require stochastic evolution
+
+
+Good news: ODE sampling often leads to the best results.
+Therefore, SDE sampling is an option, not a must!
+Aside: Langevin dynamics - Basis of Molecular Dynamics
+simulation          Molecular dynamics simulate Langevin
+                     dynamics. This equals the SDE extension
+                     trick for marginal vector field = zero and a
+                     constant probability path.
+
+
+
+
+                      We have shown:
+
+
+                                Equilibrium distribution
+Key takeaway:
+- Conversion formula: Learning the marginal vector field and learning the
+  score function is equivalent for Gaussian probability paths.
+
+
+
+- Denoising score matching: Simple way of learning marginal score
+  functions by approximating conditional score functions.
+
+
+
+- Sampling with score models: Add desired amount of noise + apply
+  correction to vector field
+                    Section 6:
+           Classifier-free guidance
+
+Goal: Understand how to enforce coherence to prompts
+                                                      Image source: Scaling Rectiﬁed
+                                                      Flow Transformers for
+                                                      High-Resolution Image Synthesis
+                                                      [1]
+
+
+
+
+Unguided: “Generate an image.”
+
+Guided: “Generate an image of a cat baking a cake.”
+Vanilla Guided Sampling
+                                               Image source:
+
+Vanilla Guidance leads to suboptimal           Classifier-free
+                                               diffusion guidance [5].
+
+
+results
+
+                              Prompt: “Corgi
+                              dog”
+
+
+                              These images do not
+                              fit well to the prompt
+                              and they have errors!
+Intuition: Classifier guidance
+
+
+                 t -d e p e n dent
+            promp
+
+
+
+No prompt
+Intuition: Classifier guidance
+
+                                         d e n t pa   rt
+                                  e p en
+                         prompt-d
+              Scale up
+
+
+
+
+                                                            ced
+                                                       fo r
+                                                    i n
+                                              t -re eld
+                                          m p        r fi
+                                      Pr o     c  to
+                                           v e
+Classifier-free guidance
+Classifier-free guidance
+
+
+
+
+                                                 ced
+                                            fo r
+                                         i n
+                                   t -re eld
+                               m p        r fi
+                           Pr o     c  to
+                                v e
+Classifier-free guidance training: Account for empty token
+
+
+
+
+                                      Drop label with a certain
+                                      probability!
+Sampling with Classifier-Free Guidance simply
+is the same as before but we use the weighted
+vector field:
+                                            Image source:
+                                            Classifier-free
+                                            diffusion guidance [5].
+Example: Classifier-Free Guidance
+          w=1.0                     w=4.0
+Example:
+Classifier-Free
+Guidance
+
+
+
+
+            Image source:
+            Classifier-free
+            diffusion guidance [5].
+ Virtually all Images or Videos that you see use CFG!
+ -   CFG is key: Without classifier-free guidance (CFG), almost nothing would
+     work.
+
+
+
+
+Example - Stable Diffusion 3: Classifier-free guidance scale w ~= 4.0
+CFG does not model the data distribution anymore!
+-   CFG is a heuristic: We do not model the data distribution anymore. In fact,
+    we go beyond it! It is primarily justified by its good empirical results!
+
+
+
+
+    Data distribution
+                                   Increasing guidance strength
+                                                                         Image source:
+                                                                         Classifier-free
+                                                                         diffusion guidance [5].
+                         Section 5:
+        A guide to the diffusion literature
+
+Goal: Understand different interpretations for diffusion models
+Time conventions:
+                                                                 Flow matching, rectified
+ “Flow time convention”:                                         flows, stochastic
+                                                                 interpolants
+  -   Data: t = 1
+  -   Noise: t = 0
+ “Diffusion time convention”:                                    Score-based diffusion
+  -   Data t = 0                                                 models with SDEs
+  -   Noise: t → infinity
+ “Discrete time”:
+  -   Use discrete time steps instead of continuous time steps
+  -   No ODE or SDE but Markov chain
+                                                                  DDPM
+  -   DDIM ~= Probability flow ODE                                DDIM
+Noising Procedure
+ Probability path (here):                                Flow matching, rectified
+                                                         flows
+
+
+
+ Interpolant function:
+                                                         Stochastic interpolants
+
+
+
+
+ “Forward” diffusion process:
+                                                         Denoising diffusion
+                                                         models
+
+
+
+ Note: For Gaussian probability paths, the above procedures are equivalent.
+Constructing noising procedures via forward noising
+processes
+
+
+
+
+The time-reversed SDE is a specific solution to the SDE extension trick that we discussed
+for a specific noise level. Empirically, this is often not the best solution in practice.
+Here: Flow Matching
+
+-   Arguably most simple flow and diffusion algorithms
+-   Allows you to restrict yourself to flows
+-   Allows you go from arbitrary            to arbitrary
+
+
+
+
+Note: The method presented here allows to convert
+arbitrary distributions into arbitrary distributions!
+Bridging arbitrary
+distributions - Example
+
+Videos without audio → videos
+with audio
+
+Low resolution images → high
+resolution images
+
+Unperturbed cells → perturbed
+cells
+
+etc.
+
+
+
+                                Figure credit: Michael Albergo
+Class Overview
+ ●   Lecture 1 - Generation as Sampling. Flow and Diffusion Models
+ ●   Lecture 2 - Flow Matching: Training algorithm.
+ ●   Lecture 3 - Score Matching, Guidance: How to condition on a prompt.
+
+
+
+ ●   Lecture 4 - Build Image Generators: Network architectures + Latent
+     spaces
+ ●   Lecture 5 - Advanced Topics: Discrete diffusion models + distilled
+     models
+                    Next class:
+           Monday, 11am-12:30pm
+Neural network architectures + latent spaces!
+
+            E25-111 (same room)
+
+
+       Office hours: Today, 3pm-4:30pm in 36-156
+References
+1. Scaling Rectified Flow Transformers for High-Resolution Image
+   Synthesis, https://arxiv.org/abs/2403.03206
+2. An Image is Worth 16x16 Words: Transformers for Image
+   Recognition at Scale, https://arxiv.org/abs/2010.11929
+3. Scalable Diffusion Models with Transformers,
+   https://arxiv.org/abs/2212.09748
+4. High Resolution Image Synthesis with Latent Diffusion Models,
+   https://arxiv.org/abs/2112.10752
+5. Classifier-Free Diffusion Guidance,
+   https://arxiv.org/abs/2207.12598
+

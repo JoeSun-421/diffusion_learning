@@ -1,0 +1,438 @@
+              Lecture 05
+Discrete diffusion models and discrete flow matching
+
+            MIT IAP 2026 | Jan 30, 2025
+
+         Peter Holderrieth and Ron Shprints
+
+           Sponsor: Tommi Jaakkola
+Class Overview
+ ●   Lecture 1 - Flow and Diffusion Models
+ ●   Lecture 2 - Flow Matching: Training algorithm.
+ ●   Lecture 3 - Score Matching, Guidance: How to condition on a prompt.
+ ● Lecture 4 - Build Image Generators: Latent spaces + Network
+     architectures
+
+
+
+ ●   Lecture 5 - Discrete diffusion models and flow matching
+Discrete Diffusion Models in the news
+
+
+
+
+                                        Slide: Subham Sahoo
+Diffusion LLMs generate text in arbitrary order
+
+
+
+
+     Austin et al., “Structured Denoising Diffusion Models in Discrete State-Spaces”, NeurIPS 2022
+
+
+
+
+                                                                             Slide: Subham Sahoo
+Discrete diffusion models and discrete flow matching
+ -   Models for discrete sequence data: Language, protein sequences, etc.
+ -   Note: There is no diffusion/SDE and also no flow/ODE in discrete space.
+ -   Rather: Learning principles of flow matching and denoising can be
+     generalized to discrete data!
+ -   Mathematical model: Continuous-time Markov chains (CTMCs)
+ - Today:
+      -   CTMC Models
+      -   Discrete Flow Matching:
+           - Discrete Probability Paths
+           - Discrete Marginalization Trick
+           - Discrete FM objective
+Continuous Time Markov Chains
+
+
+
+
+                                Figures: Andrew Campbell
+Example - Continuous-time Markov chain
+
+ State space                              Rate matrix
+
+
+By showing evolution equation (taking derivatives), one obtains:
+
+
+
+
+    Convergence for h to infinity:
+Examples of neighbors
+
+ X and y are
+ neighbors
+
+ Y and z are
+ neighbors
+
+ Z and x are not
+ neighbors
+General CTMC   Factorized CTMC
+
+
+
+
+                 Figures: Yaron Lipman
+Sampling
+from
+factorized
+CTMC
+models
+Illustration of sampling procedure
+
+
+
+
+     Austin et al., “Structured Denoising Diffusion Models in Discrete State-Spaces”, NeurIPS 2022
+
+
+
+
+                                                                             Slide: Subham Sahoo
+Generative Modeling with CTMCs
+                                                     E.g. distribution
+Data distribution:
+                                                     of texts on the
+                                                     internet
+
+
+Initial distribution:                                E.g. uniform
+                                                     distribution
+
+
+
+
+              Goal: Convert “Noise” to Data with a CTMC
+
+
+                            CTMC
+                   Continuous Flow Matching
+
+
+  Conditional             Conditional        Conditional
+Probability Path          Vector Field   Flow Matching Loss
+
+   Marginal                Marginal           Marginal
+Probability Path          Vector Field   Flow Matching Loss
+           The Discrete Flow Matching Matrix
+
+
+  Conditional         Conditional
+Probability Path      Rate Matrix
+                                           Discrete
+                                      Flow Matching Loss
+   Marginal            Marginal
+Probability Path      Rate Matrix
+Example - Factorized Mixture Path
+Scheduler:                  such that
+
+
+Idea: Noise each token independently with probability   :
+
+
+
+
+                        Downweight noise     Upweight data
+Sampling procedure:
+                                                             Check for yourself
+                                                             that this is a cond.
+                                                                 prob. path!
+Toy example
+
+
+
+
+Figure credit:
+Yaron Lipman
+  Discrete
+  Probability Path
+
+
+
+
+Figure credit:
+Yaron Lipman
+Note difference
+to before:
+Probability is
+teleported - not
+moved through
+space
+
+
+
+Figure credit:
+Yaron Lipman
+  Discrete
+  Probability Path
+
+
+
+
+Figure credit:
+Yaron Lipman
+Kolmogorov Forward Equation
+Discrete analogue to the continuity equation.
+
+A CTMC with rate matrix Q_t follows the probability path
+
+
+
+
+if and only if the Kolmogorov Forward Equation (KFE) holds:
+
+
+
+
+           change of probability                Net inflow
+Conditional Rate Matrix for Factorized Mixture Path
+The conditional rate matrix for factorized mixture path is factorized (i.e. rates only
+non-negative for one token updates) and given by
+
+
+
+
+                                                          If current token correct, zero rate
+
+                                                        If incorrect, jump to correct
+                                                                    token
+
+
+                                                        Outgoing rate from current token, if
+                                                                     incorrect
+Conditional Rate Matrix for Factorized Mixture Path
+
+
+
+
+                                       If current token correct, zero rate
+
+                                     If incorrect, jump to correct
+                                                 token
+
+
+   Rates explode at                   Outgoing rate from current token, if
+         t=1                                       incorrect
+ Conditional Prob. Path, Vector Field, and Score
+
+              Notation   Key property          Factorized mixture
+
+
+Conditional              Interpolates
+Probability              and a data point z
+Path
+
+
+
+Conditional                 CTMC follows
+Rate Matrix                 conditional path
+Marginal Prob. Path, Vector Field, and Score
+              Notation     Key property      Formula
+
+Marginal                 Interpolates
+Probability
+Path
+                         and
+
+
+
+Marginal                  CTMC follows
+Vector                    marginal path
+Field                       Gradient of
+                            log-likelihood
+                            of marginal
+                            path
+  Marginal Rate Matrix for Factorized Mixture Path
+                                                                  Known
+                                                                 terminal
+     Conditional                                                  point!
+     Rate Matrix
+
+
+
+
+Marginal
+Rate Matrix
+
+
+                                      Conditional probability!
+
+                                          Only unknown!
+Discrete Flow Matching loss
+
+  Posterior probability network
+
+
+
+  Learn via classification:
+
+
+
+
+                                  Cross-entropy loss for every
+                                          dimension!
+Mask Diffusion Language Models
+Introduce new token into vocabulary: [MASK]
+
+This token indicates that we masked the reference token
+
+Initial distribution:
+
+
+---- ----- ------ -- -- ----- --- ------ ------ ------- ---------
+------- --- -- -------- ---- ------- --------- ---- --- ------
+---- --- -- -------- ---- -- ---- ---- ------- --- - ------- --
+------ ----- ------- ----- -- --- ---- -- - ----- -- ----- -----
+---- --- ----- - --- -- -------- ------- ----- ---- ----- ---
+--------- ---- ----------- ----- --- ----- --- -- ------ ---- ----
+------ ------ ------ --- -- ----- -- -------- ---- -- ---
+--------- -- ------
+                                                           Slide: Subham Sahoo
+
+Sampling from a Masked Language Model
+
+
+                        Start with fully masked (initial
+                                 distribution)
+
+
+
+---- ----- ------ -- -- ----- --- ------ ------ ------- ---------
+------- --- -- -------- ---- ------- --------- ---- --- ------
+---- --- -- -------- ---- -- ---- ---- ------- --- - ------- --
+------ ----- ------- ----- -- --- ---- -- - ----- -- ----- -----
+---- --- ----- - --- -- -------- ------- ----- ---- ----- ---
+--------- ---- ----------- ----- --- ----- --- -- ------ ---- ----
+------ ------ ------ --- -- ----- -- -------- ---- -- ---
+--------- -- ------
+                                                   Slide: Subham Sahoo
+
+
+
+
+                               t=0.3
+
+
+
+---- ----- ------ -- -- ----- --- ------ squad, ------- ---------
+------- --- to remember ---- ------- --------- when --- ------
+---- --- to -------- ---- -- ---- ---- ------- --- - ------- --
+twenty adobe ------- ----- -- --- ---- -- - ----- of ----- water
+---- --- along - --- -- polished ------- which ---- ----- ---
+--------- ---- prehistoric ----- --- ----- --- -- ------ ---- many
+------ ------ ------ --- in ----- -- -------- ---- -- ---
+--------- -- ------
+                                                   Slide: Subham Sahoo
+
+
+
+
+                               t=0.6
+
+
+
+Many years later, as he faced --- ------ squad, ------- ---------
+Buendía was to remember that distant --------- when his ------
+took --- to discover ---- At that ---- ------- was a village of
+twenty adobe houses, built -- the bank of - river of clear water
+that ran along - --- of polished stones, which were ----- and
+--------- like prehistoric eggs. --- ----- --- so recent ---- many
+things lacked names, and in ----- -- -------- them it was
+--------- to ------
+                                                   Slide: Subham Sahoo
+
+
+
+
+                               t=0.8
+
+
+
+Many years later, as he faced the firing squad, Colonel Aureliano
+Buendía was to remember that distant --------- when his father
+took him to discover ice. At that time Macondo was a village of
+twenty adobe houses, built on the bank of - river of clear water
+that ran along a bed of polished stones, which were white and
+enormous, like prehistoric eggs. The world --- so recent that many
+things lacked names, and in order -- indicate them it was
+--------- to point.
+                                                   Slide: Subham Sahoo
+
+
+
+
+                               t=1.0
+
+
+
+Many years later, as he faced the firing squad, Colonel Aureliano
+Buendía was to remember that distant afternoon when his father
+took him to discover ice. At that time Macondo was a village of
+twenty adobe houses, built on the bank of a river of clear water
+that ran along a bed of polished stones, which were white and
+enormous, like prehistoric eggs. The world was so recent that many
+things lacked names, and in order to indicate them it was
+necessary to point.
+Masked Diffusion LLMs generate text
+
+
+
+
+    Austin et al., “Structured Denoising Diffusion Models in Discrete State-Spaces”, NeurIPS 2022
+
+
+
+
+                                                                            Slide: Subham Sahoo
+Discussion: Discrete Diffusion Models vs Autoregressive
+Models
+                                 Advantages
+ -   Generate Multiple Tokens in Parallel → More Speed?!
+ -   Generate Tokens in any order → Text editing?!
+ -   New probability paths → Can we design ones that make semantic sense?
+
+                               Disadvantages
+
+ -   No KV caching → Less Speed?!
+ -   Need to learn how to generate Tokens in any order → Harder to learn?!
+ -   Autoregressive order (left-to-right) makes semantic sense → Is it worth it?
+                   Continuous Flow Matching
+
+
+  Conditional             Conditional        Conditional
+Probability Path          Vector Field   Flow Matching Loss
+
+   Marginal                Marginal           Marginal
+Probability Path          Vector Field   Flow Matching Loss
+           The Discrete Flow Matching Matrix
+
+
+  Conditional         Conditional
+Probability Path      Rate Matrix
+                                           Discrete
+                                      Flow Matching Loss
+   Marginal            Marginal
+Probability Path      Rate Matrix
+How can it be that Flow Matching recipe works so similarly
+for discrete data and CTMCs?
+
+The principle underlying flow matching is more general. It can be derived for a
+general class of Markov processes:
+Class Recap
+ ●   Lecture 1 - Flow and Diffusion Models
+ ●   Lecture 2 - Flow Matching: Training algorithm.
+ ●   Lecture 3 - Score Matching, Guidance: How to condition on a prompt.
+ ● Lecture 4 - Build Image Generators: Latent spaces + Network
+     architectures
+ ●   Lecture 5 - Discrete diffusion models and flow matching
+            This is our final class!
+         Thank you for joining us!!!!
+
+
+Please fill out the subject evaluation surveys!
+

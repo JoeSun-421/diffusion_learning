@@ -1,0 +1,402 @@
+          Lecture 04
+Latent Spaces, Neural network architectures
+
+        MIT IAP 2026 | Jan 28, 2025
+
+     Peter Holderrieth and Ron Shprints
+
+       Sponsor: Tommi Jaakkola
+Class Overview
+ ●   Lecture 1 - Flow and Diffusion Models
+ ●   Lecture 2 - Flow Matching: Training algorithm.
+ ●   Lecture 3 - Score Matching, Guidance: How to condition on a prompt.
+
+
+
+ ● Lecture 4 - Build Image Generators: Latent spaces + Network
+     architectures
+ ●   Lecture 5 - Advanced Topics: Discrete diffusion models + distilled
+     models
+                      Section 6:
+                   Latent Spaces
+
+Goal: Understand how data can be transformed into latents
+          that can be more efficiently modelled
+The Need for Latent Spaces
+-   High-resolution image: 3 color channels, height 600, width
+    1000 → the resulting dimension is: 3*600*1000 = 1.8 million!
+-   This is a very high-dimensional space!!!!
+The Need for Latent Spaces
+ -   High-resolution image: 3 color channels, height 600, width
+     1000 → the resulting dimension is: 3*600*1000 = 1.8 million!
+ -   This is a very high-dimensional space!!!!
+
+Several problems:
+
+ -   GPU memory blows up
+ -   Learning problem is very hard
+ -   Redundancy: Closeby pixels highly correlated
+The Need for Latent Spaces
+ -   High-resolution image: 3 color channels, height 600, width
+     1000 → the resulting dimension is: 3*600*1000 = 1.8 million!
+ -   This is a very high-dimensional space!!!!
+
+Several problems:
+
+ -   GPU memory blows up
+ -   Learning problem is very hard
+ -   Redundancy: Closeby pixels highly correlated
+
+
+Why is this a problem for diffusion models and not for supervised
+                             learning?
+The Need for Latent Spaces
+ -   High-resolution image: 3 color channels, height 600, width
+     1000 → the resulting dimension is: 3*600*1000 = 1.8 million!
+ -   This is a very high-dimensional space!!!!
+
+Several problems:
+
+ -   GPU memory blows up
+ -   Learning problem is very hard
+ -   Redundancy: Closeby pixels highly correlated
+
+
+Why is this a problem for diffusion models and not for supervised
+                             learning?
+                     We learn a vector field - output is very high-dimensional!
+                     We apply vector field many times (simulation of ODE)!
+Latent Spaces are constructed via autoencoders
+                   Autoencoder = Encoder + Decoder
+
+
+
+
+                                           Decoder
+                      Encoder
+                                Latent
+      Data space                                     Data space
+                                space
+Latent Spaces are constructed via autoencoders
+                   Autoencoder = Encoder + Decoder
+
+
+
+
+                                              Decoder
+                      Encoder
+                                   Latent
+      Data space                                        Data space
+                                   space
+
+
+
+
+                                Compression
+The Problem of Standard Autoencoders
+                                                            A “bad” latent space
+
+Our goal is to transform data into latents and then learn
+the distribution of latents.
+Question: What happens to the data distribution when we
+transform it into latent space?
+Answer: We don’t know. The reconstruction loss does not
+say anything about the distribution.
+Problem: We might make the learning problem (i.e.
+training) much harder. Therefore, we might be able to
+compress but not able to learn how to sample the
+distribution anymore.
+
+
+ Goal: Create autoencoder that creates “nice” latent distribution
+KL-divergence
+
+
+
+
+The KL divergences measures how different two distributions are. It fulfills the
+natural properties:
+KL-divergence of two normal distributions
+Two normal distributions are given:
+
+
+
+
+The formula for the KL-divergence is given in this case by:
+
+
+
+
+                                 Dist. of
+                                  mean
+Plotting
+
+
+
+
+      Minimum at 1
+KL-divergence of two normal distributions
+Let two normal distributions be given:
+
+
+
+
+The formula for the KL-divergence is given in this case by:
+
+
+
+
+                 Dist. of        Dist. of
+                variances         mean
+VAE -
+Training
+Algorithm
+Latent Diffusion Models (LDMs) - Recipe
+1.   Data: Take all training data x1,....,xN (e.g. all images on the internet)
+2.   Encoding: Convert all images into latents (for VAE simply take the mean
+     prediction)
+3.   Latent data: This gives us a dataset of latents z1,...,zN of significantly smaller
+     size than high resolution images
+4.   Latent diffusion model: Build a diffusion model for the dataset of latents, i.e.
+     the diffusion model now generates latent vectors!
+5.   Decoding: After sampling from the diffusion model, map generated latent
+     back to data space
+Return decoded image as sample!
+
+
+Note: Exact same recipe as before. Just with a transformed dataset!
+Virtually all AI-generated Images or Videos that you see
+are generated in latent spaces!
+ -    Latent space is key: Memory would blow up too much otherwise. We need
+      to allow the model to focus on key parts!
+
+
+
+
+Example - Stable Diffusion: Images of shape [3,256,256] -> [4,32,32]
+
+     Example - FLUX 2.0: Images of shape [3,1024,1024] ->[32,64,64]
+                       Section 7:
+          Neural network architectures
+
+Goal: Understand how to build neural networks for diffusion
+                        models
+Parameterizing a vector field in a neural network
+
+
+
+Parameters
+
+
+
+
+                Time    Latent   Prompt
+                        image
+Encoding Time
+Time is only one-dimensional, while all other variables are high-dimensional.
+
+To make it “count” more, we embed it via the following sinusoidal embedding
+into high-dimensional vector:
+
+
+
+Frequencies are chosen as follows:
+
+
+
+
+Note: Specific format is less important than the time embedding is a
+d-dimensional normed vector:
+Encoding Language Prompt
+         “A dog running on grass in a park at sunshine in an Italian city.””
+
+To embed text, most models rely on pre-trained language embeddings:
+
+ -   Use CLIP embeddings (Contrastive Language-Image Pre-training)
+ -   T5 embeddings, etc. (other pre-trained models)
+ -   Can also use LLM embeddings
+
+Prompt embedding: The result of these embeddings is that the prompt a
+sequence of vectors of length S:
+Patchify: Turn an Image into a Sequence of Vectors
+
+
+
+
+                                                                           L is the
+Source:
+                                                                          sequence
+https://gowrishankar.info/blog/transformers-everywhere-patch-encoding-t
+echnique-for-vision-transformersvit-explained/
+                                                                           length
+Diffusion
+Transformer (DiT)
+ Transformer model for
+ diffusion models.
+
+
+
+ Adapts transformer model
+ for specific form that is
+ required for diffusion
+ models.
+
+                             Peebles, W., & Xie, S. (2023). Scalable diffusion models with transformers. In
+                             Proceedings of the IEEE/CVF international conference on computer vision (pp.
+                             4195-4205).
+Diffusion Transformer Overview
+
+   Inputs
+
+
+ Attention
+   loop
+
+
+
+
+ Unpatchify
+Background - Scaled dot-product attention
+
+
+
+
+ Attention is an operation that maps sequences of vectors to sequences of
+        vectors via simple matrix multiplication + softmax operation.
+3 inputs:
+ 1. Keys
+ 2. Values
+ 3. Queries
+DiTBlock Overview
+  -   Image via Self-attention: Process image itself
+      Queries = image, Keys = image, values = image
+  -   Text via Cross-attention: Attend image to text
+      Queries = image, Keys = text embeds, values = text embeds
+  -   Time via Adaptative Layer Normalization:
+      Scaling and offset of normalization is determined by time variable
+ All inputs are combined by summing them up.
+
+  Best way to understand a transform is to implement it! See
+  Lab 03! Further, lecture notes contain detailed information.
+                        Bonus:
+         Large-scale diffusion models
+
+Goal: Understand how diffusion models are trained at scale
+                                                        Image source: Scaling Rectiﬁed Flow
+
+Case Study: Stable Diffusion 3                          Transformers for High-Resolution Image
+                                                        Synthesis [1]
+
+Overview:
+ -   Flow Matching model with “straight line” schedulers (CondOT path)
+ -   Classifier-free guidance with weight 2.0 - 5.0
+ -   Flow Matching in latent space (use pre-trained VAE)
+ -   Number of parameters of model: 8 billion
+ -   Number of simulation/sampling steps: 50
+ -   Dataset: LAION
+Neural network architecture for Stable Diffusion 3
+
+- Conditions on CLIP
+  (coarse-grained) and T5-XXL
+  (sequence-level) text
+  embeddings via cross-attention.
+- MM-DiT architecture: Extends
+  DiT from class-conditioning to
+  text-conditioning and processes
+  text and images through the
+  entire network via cross-attention   Image source: Scaling Rectiﬁed Flow
+                                       Transformers for High-Resolution Image
+                                       Synthesis [1]
+Case Study - Meta MovieGen
+                                                         Image source: Scaling Rectiﬁed Flow
+
+Case Study: Meta MovieGen                                Transformers for High-Resolution Image
+                                                         Synthesis [1]
+
+
+ - Flow Matching model with “straight line” schedulers (CondOT path)
+ - Classifier-free guidance
+ - Flow Matching in latent space (use pre-trained VAE) - Really crucial for
+   videos because of added time dimension
+ - Neural network architecture: DiT adapted to videos (what changs?!)
+ - Number of parameters of model: 30 billion
+ - 6,144 H100 GPUs!
+                           Bonus:
+        A guide to the diffusion literature
+
+Goal: Understand different interpretations for diffusion models
+Time conventions:
+                                                                 Flow matching, rectified
+ “Flow time convention”:                                         flows, stochastic
+                                                                 interpolants
+  -   Data: t = 1
+  -   Noise: t = 0
+ “Diffusion time convention”:                                    Score-based diffusion
+  -   Data t = 0                                                 models with SDEs
+  -   Noise: t → infinity
+ “Discrete time”:
+  -   Use discrete time steps instead of continuous time steps
+  -   No ODE or SDE but Markov chain
+                                                                  DDPM
+  -   DDIM ~= Probability flow ODE                                DDIM
+Noising Procedure - how to corrupt data?
+  Probability path (here):                                Flow matching, rectified
+                                                          flows
+
+
+
+  Interpolant function:
+                                                          Stochastic interpolants
+
+
+
+
+  “Forward” diffusion process:
+                                                          Denoising diffusion
+                                                          models
+
+
+
+  Note: For Gaussian probability paths, the above procedures are equivalent.
+Constructing noising procedures via forward noising
+processes
+
+
+
+
+The time-reversed SDE is a specific solution to the SDE extension trick that we discussed
+for a specific noise level. Empirically, this is often not the best solution in practice.
+Here: Flow Matching
+
+-   Arguably most simple flow and diffusion algorithms
+-   Allows you to restrict yourself to flows
+-   Allows you go from arbitrary            to arbitrary
+
+
+
+
+Note: The method presented here allows to convert
+arbitrary distributions into arbitrary distributions!
+Bridging arbitrary
+distributions - Example
+
+Videos without audio → videos
+with audio
+
+Low resolution images → high
+resolution images
+
+Unperturbed cells → perturbed
+cells
+
+etc.
+
+
+
+                                Figure credit: Michael Albergo
+       Next class:
+  Friday, 12:30pm-2pm
+Discrete diffusion models
+
+  E25-111 (same room)
+
