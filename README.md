@@ -22,4 +22,3 @@ MIT IAP 2026《Generative AI with Stochastic Differential Equations》课程资�
 | `lecs/lec4.pdf` | 讲义 4 | `lecs/translations/lec4.zh.md` |
 | `lecs/lec5.pdf` | 讲义 5 | `lecs/translations/lec5.zh.md` |
 | `notes/notes.pdf` 第 1–7 节及附录 | 课程讲义 | `notes/translations/notes.zh.md` |
-# diffusion_learning
